@@ -1,0 +1,165 @@
+<%- include('partials/header') %>
+
+<div style="margin-bottom: 30px;">
+  <h2>Daily Schedule</h2>
+  <p style="color: var(--text-secondary); margin-top: 4px;">Track your medications, dosage schedules, and daily progress</p>
+</div>
+
+<!-- Horizontal Calendar Day Picker -->
+<div class="calendar-picker">
+  <% calendarDays.forEach(function(day) { %>
+    <a href="/?date=<%= day.dateString %>" class="calendar-day <%= selectedDate === day.dateString ? 'active' : '' %>">
+      <span class="calendar-day-name"><%= day.dayName %></span>
+      <span class="calendar-day-num"><%= day.dayNum %></span>
+    </a>
+  <% }); %>
+</div>
+
+<div class="dashboard-grid">
+  <!-- Left Column: Medicine Checklist -->
+  <div>
+    <div class="section-title">
+      <h3>Medicines for <%= selectedDate === today ? 'Today' : selectedDate %></h3>
+    </div>
+
+    <% if (activeMedicines.length === 0) { %>
+      <div class="glass-panel" style="margin-bottom: 30px;">
+        <div class="empty-state">
+          <i class="ri-calendar-check-line"></i>
+          <h3>No Medicines Scheduled</h3>
+          <p>There are no medications scheduled for this date.</p>
+          <% if (selectedDate === today) { %>
+            <a href="/medicines/add" class="btn btn-primary">Add a Medicine</a>
+          <% } %>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="medicine-list" style="margin-bottom: 30px;">
+        <% activeMedicines.forEach(function(med) { %>
+          <div class="glass-panel medicine-item">
+            <div class="med-left">
+              <!-- Custom Interactive Checkbox -->
+              <div class="med-checkbox-container">
+                <% if (med.status === 'Taken') { %>
+                  <form action="/history/log" method="POST" style="margin: 0;">
+                    <input type="hidden" name="medicineId" value="<%= med.MedicineId %>">
+                    <input type="hidden" name="date" value="<%= selectedDate %>">
+                    <input type="hidden" name="status" value="Missed">
+                    <button type="submit" class="med-checkbox checked" title="Mark as Pending / Missed">
+                      <i class="ri-checkbox-circle-fill"></i>
+                    </button>
+                  </form>
+                <% } else if (med.status === 'Missed') { %>
+                  <form action="/history/log" method="POST" style="margin: 0;">
+                    <input type="hidden" name="medicineId" value="<%= med.MedicineId %>">
+                    <input type="hidden" name="date" value="<%= selectedDate %>">
+                    <input type="hidden" name="status" value="Taken">
+                    <button type="submit" class="med-checkbox missed" title="Mark as Taken">
+                      <i class="ri-close-circle-fill"></i>
+                    </button>
+                  </form>
+                <% } else if (med.status === 'Pending') { %>
+                  <form action="/history/log" method="POST" style="margin: 0;">
+                    <input type="hidden" name="medicineId" value="<%= med.MedicineId %>">
+                    <input type="hidden" name="date" value="<%= selectedDate %>">
+                    <input type="hidden" name="status" value="Taken">
+                    <button type="submit" class="med-checkbox pending" title="Mark as Taken">
+                      <i class="ri-checkbox-blank-circle-line"></i>
+                    </button>
+                  </form>
+                <% } else { %>
+                  <button class="med-checkbox upcoming" disabled title="Upcoming Dose">
+                    <i class="ri-checkbox-blank-circle-line"></i>
+                  </button>
+                <% } %>
+              </div>
+
+              <!-- Medicine Details Info -->
+              <div class="med-info <%= med.status === 'Taken' ? 'completed' : '' %>">
+                <span class="med-name"><%= med.MedicineName %></span>
+                <div class="med-meta">
+                  <span><i class="ri-drop-line"></i> Dosage: <strong><%= med.Dosage %></strong></span>
+                  <span><i class="ri-time-line"></i> Time: <strong><%= med.Time %></strong></span>
+                </div>
+                <% if (med.Notes) { %>
+                  <div class="med-notes">
+                    <i class="ri-sticky-note-line"></i> <%= med.Notes %>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Action buttons / Log status badge on the right -->
+            <div class="med-actions">
+              <% if (med.status === 'Taken') { %>
+                <span class="status-badge status-badge-taken">
+                  Completed
+                </span>
+              <% } else if (med.status === 'Missed') { %>
+                <span class="status-badge status-badge-missed">
+                  Missed
+                </span>
+              <% } else if (med.status === 'Pending') { %>
+                <span class="status-badge" style="background-color: var(--color-warning-light); color: var(--color-warning);">
+                  Overdue
+                </span>
+                <form action="/history/log" method="POST" style="margin: 0 0 0 8px;">
+                  <input type="hidden" name="medicineId" value="<%= med.MedicineId %>">
+                  <input type="hidden" name="date" value="<%= selectedDate %>">
+                  <input type="hidden" name="status" value="Missed">
+                  <button type="submit" class="btn btn-secondary btn-icon" style="width: 28px; height: 28px;" title="Mark as Missed">
+                    <i class="ri-close-line" style="font-size: 0.8rem;"></i>
+                  </button>
+                </form>
+              <% } else { %>
+                <span style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+                  <i class="ri-time-line"></i> Upcoming
+                </span>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Right Column: Adherence Analytics Panel -->
+  <div>
+    <div class="section-title">
+      <h3>Adherence Stats</h3>
+    </div>
+    
+    <div class="glass-panel stat-card stat-info" style="margin-bottom: 20px;">
+      <span class="stat-label">Daily Progress</span>
+      <span class="stat-value"><%= stats.progressPercent %>%</span>
+      <div class="progress-container">
+        <div class="progress-bar" style="width: <%= stats.progressPercent %>%;"></div>
+      </div>
+      <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 10px;">
+        <%= stats.takenCount %> of <%= stats.totalCount %> doses completed today.
+      </p>
+    </div>
+
+    <div class="stats-row">
+      <div class="glass-panel stat-card stat-success">
+        <span class="stat-label">Taken</span>
+        <span class="stat-value"><%= stats.takenCount %></span>
+      </div>
+      <div class="glass-panel stat-card stat-danger">
+        <span class="stat-label">Missed</span>
+        <span class="stat-value"><%= stats.missedCount %></span>
+      </div>
+    </div>
+    
+    <div class="glass-panel" style="margin-top: 10px;">
+      <h4 style="font-size: 1rem; margin-bottom: 10px;"><i class="ri-lightbulb-line" style="color: var(--color-warning);"></i> Tips for Adherence</h4>
+      <ul style="list-style: none; font-size: 0.85rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 8px; padding: 0;">
+        <li><i class="ri-checkbox-blank-circle-fill" style="font-size: 0.4rem; color: var(--color-primary); vertical-align: middle; margin-right: 6px;"></i> Keep your medicines in sight.</li>
+        <li><i class="ri-checkbox-blank-circle-fill" style="font-size: 0.4rem; color: var(--color-primary); vertical-align: middle; margin-right: 6px;"></i> Link taking pills to a daily habit.</li>
+        <li><i class="ri-checkbox-blank-circle-fill" style="font-size: 0.4rem; color: var(--color-primary); vertical-align: middle; margin-right: 6px;"></i> Make sure browser notifications are enabled!</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

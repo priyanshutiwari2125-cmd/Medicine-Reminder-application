@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediMind - Medicine Reminder Application</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#4f46e5">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <i class="ri-heart-pulse-fill"></i>
+      <span>MediMind</span>
+    </a>
+    
+    <ul class="nav-links">
+      <li>
+        <a href="index.html" class="nav-link">
+          <i class="ri-dashboard-line"></i> Dashboard
+        </a>
+      </li>
+      <li>
+        <a href="medicines.html" class="nav-link">
+          <i class="ri-capsule-line"></i> Medicines
+        </a>
+      </li>
+      <li>
+        <a href="history.html" class="nav-link active">
+          <i class="ri-history-line"></i> History
+        </a>
+      </li>
+    </ul>
+
+    <div class="nav-actions">
+      <button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle dark mode">
+        <i class="ri-moon-line moon-icon"></i>
+        <i class="ri-sun-line sun-icon"></i>
+      </button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div style="margin-bottom: 30px;">
+      <h2>Medication History</h2>
+      <p style="color: var(--text-secondary); margin-top: 4px;">Review your log of taken and missed medications</p>
+    </div>
+
+    <!-- Adherence stats card row -->
+    <div class="stats-row" style="margin-bottom: 30px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+      <div class="glass-panel stat-card stat-info">
+        <span class="stat-label">Adherence Rate</span>
+        <span class="stat-value" id="adherencePercent">0%</span>
+      </div>
+      <div class="glass-panel stat-card stat-success">
+        <span class="stat-label">Total Taken</span>
+        <span class="stat-value" id="totalTakenCount">0</span>
+      </div>
+      <div class="glass-panel stat-card stat-danger">
+        <span class="stat-label">Total Missed</span>
+        <span class="stat-value" id="totalMissedCount">0</span>
+      </div>
+    </div>
+
+    <!-- Filters and Checklist view -->
+    <div class="glass-panel" style="padding: 25px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px;">
+        <h3 style="font-size: 1.15rem; margin: 0;">Logs Checklist</h3>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="setFilter('')" class="btn btn-secondary active" id="btnFilterAll" style="font-size: 0.85rem; padding: 6px 12px;">All</button>
+          <button onclick="setFilter('Taken')" class="btn btn-secondary" id="btnFilterTaken" style="font-size: 0.85rem; padding: 6px 12px;">Taken</button>
+          <button onclick="setFilter('Missed')" class="btn btn-secondary" id="btnFilterMissed" style="font-size: 0.85rem; padding: 6px 12px;">Missed</button>
+        </div>
+      </div>
+
+      <div id="historyTableContainer">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; <span id="yearSpan"></span> MediMind. All rights reserved. Designed for College Mini Project.</p>
+  </footer>
+
+  <!-- Global Glassmorphic Alarm Notification Overlay -->
+  <div class="alarm-overlay" id="alarmOverlay">
+    <div class="alarm-modal">
+      <div class="alarm-icon-wrapper">
+        <i class="ri-notification-3-line"></i>
+      </div>
+      <h2 class="alarm-title">Medication Due Now!</h2>
+      <div class="alarm-med-name" id="alarmMedName">Medicine Name</div>
+      <div class="alarm-med-dosage" id="alarmMedDosage">1 Tablet</div>
+      <div class="alarm-actions">
+        <button class="btn btn-success" id="alarmBtnTaken">
+          <i class="ri-check-line"></i> Mark as Taken
+        </button>
+        <button class="btn btn-danger" id="alarmBtnMissed">
+          <i class="ri-close-line"></i> Mark as Missed
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="js/db.js"></script>
+  <script src="js/reminder-service.js"></script>
+  <script>
+    // Theme Toggle Handler
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+
+    document.getElementById('yearSpan').textContent = new Date().getFullYear();
+
+    let currentFilter = '';
+
+    window.setFilter = function(filterVal) {
+      currentFilter = filterVal;
+      
+      // Update active filter button styles
+      document.getElementById('btnFilterAll').classList.toggle('active', filterVal === '');
+      document.getElementById('btnFilterTaken').classList.toggle('active', filterVal === 'Taken');
+      document.getElementById('btnFilterMissed').classList.toggle('active', filterVal === 'Missed');
+
+      renderHistory();
+    };
+
+    function renderHistory() {
+      const container = document.getElementById('historyTableContainer');
+      if (!window.DB) return;
+
+      const logs = window.DB.getHistory(currentFilter);
+      const allLogs = window.DB.getHistory(); // To compute stats on total history
+
+      // Calculate aggregate stats
+      let totalTaken = 0;
+      let totalMissed = 0;
+      allLogs.forEach(h => {
+        if (h.Status === 'Taken') totalTaken++;
+        if (h.Status === 'Missed') totalMissed++;
+      });
+      const totalLogs = totalTaken + totalMissed;
+      const adherenceRate = totalLogs > 0 ? Math.round((totalTaken / totalLogs) * 100) : 0;
+
+      // Update stats cards
+      document.getElementById('adherencePercent').textContent = `${adherenceRate}%`;
+      document.getElementById('totalTakenCount').textContent = totalTaken;
+      document.getElementById('totalMissedCount').textContent = totalMissed;
+
+      if (logs.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px 0; color: var(--text-muted);">
+            <i class="ri-history-line" style="font-size: 2.5rem; display: block; margin-bottom: 12px; color: var(--text-muted); opacity: 0.5;"></i>
+            <p>No history logs found for this filter.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = `
+        <div style="overflow-x: auto;">
+          <table class="table" style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border-glass);">
+                <th style="padding: 12px; color: var(--text-secondary); font-weight: 600;">Medicine</th>
+                <th style="padding: 12px; color: var(--text-secondary); font-weight: 600;">Dosage</th>
+                <th style="padding: 12px; color: var(--text-secondary); font-weight: 600;">Log Date</th>
+                <th style="padding: 12px; color: var(--text-secondary); font-weight: 600;">Log Time</th>
+                <th style="padding: 12px; color: var(--text-secondary); font-weight: 600;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      logs.forEach(log => {
+        const badgeClass = log.Status === 'Taken' ? 'status-badge-taken' : 'status-badge-missed';
+        html += `
+          <tr style="border-bottom: 1px solid var(--border-glass); transition: background-color var(--transition-fast);">
+            <td style="padding: 16px 12px; font-weight: 500; color: var(--text-primary);">${log.MedicineName}</td>
+            <td style="padding: 16px 12px; color: var(--text-secondary);">${log.Dosage}</td>
+            <td style="padding: 16px 12px; color: var(--text-secondary);">${log.Date}</td>
+            <td style="padding: 16px 12px; color: var(--text-secondary);">${log.Time}</td>
+            <td style="padding: 16px 12px;">
+              <span class="status-badge ${badgeClass}">${log.Status}</span>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Initial render
+    renderHistory();
+  </script>
+</body>
+</html>

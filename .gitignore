@@ -1,0 +1,30 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Databases
+*.db
+*.sqlite
+
+# Environment variables
+.env
+
+# Custom JDK download folders
+jdk17/
+jdk21/
+temp_zip/
+
+# Gradle and Android build outputs
+.gradle/
+build/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/capacitor-cordova-android-plugins/
+android/app/src/main/assets/public/
+
+# OS metadata
+.DS_Store
+Thumbs.db

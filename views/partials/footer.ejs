@@ -1,0 +1,43 @@
+  </main>
+
+  <footer>
+    <p>&copy; <%= new Date().getFullYear() %> MediMind. All rights reserved. Designed for College Mini Project.</p>
+  </footer>
+
+  <!-- Global Glassmorphic Alarm Notification Overlay -->
+  <div class="alarm-overlay" id="alarmOverlay">
+    <div class="alarm-modal">
+      <div class="alarm-icon-wrapper">
+        <i class="ri-notification-3-line"></i>
+      </div>
+      <h2 class="alarm-title">Medication Due Now!</h2>
+      <div class="alarm-med-name" id="alarmMedName">Medicine Name</div>
+      <div class="alarm-med-dosage" id="alarmMedDosage">1 Tablet</div>
+      <div class="alarm-actions">
+        <button class="btn btn-success" id="alarmBtnTaken">
+          <i class="ri-check-line"></i> Mark as Taken
+        </button>
+        <button class="btn btn-danger" id="alarmBtnMissed">
+          <i class="ri-close-line"></i> Mark as Missed
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Script that runs the alarm monitoring and notification checks -->
+  <script src="/js/reminder-service.js"></script>
+
+  <script>
+    // Theme Toggle Handler
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+  </script>
+</body>
+</html>

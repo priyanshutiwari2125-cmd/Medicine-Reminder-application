@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediMind - Medicine Reminder Application</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#4f46e5">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <i class="ri-heart-pulse-fill"></i>
+      <span>MediMind</span>
+    </a>
+    
+    <ul class="nav-links">
+      <li>
+        <a href="index.html" class="nav-link active">
+          <i class="ri-dashboard-line"></i> Dashboard
+        </a>
+      </li>
+      <li>
+        <a href="medicines.html" class="nav-link">
+          <i class="ri-capsule-line"></i> Medicines
+        </a>
+      </li>
+      <li>
+        <a href="history.html" class="nav-link">
+          <i class="ri-history-line"></i> History
+        </a>
+      </li>
+    </ul>
+
+    <div class="nav-actions">
+      <button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle dark mode">
+        <i class="ri-moon-line moon-icon"></i>
+        <i class="ri-sun-line sun-icon"></i>
+      </button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div style="margin-bottom: 30px;">
+      <h2>Daily Schedule</h2>
+      <p style="color: var(--text-secondary); margin-top: 4px;">Track your medications, dosage schedules, and daily progress</p>
+    </div>
+
+    <!-- Horizontal Calendar Day Picker -->
+    <div class="calendar-picker" id="calendarPicker">
+      <!-- Generated dynamically by JS -->
+    </div>
+
+    <div class="dashboard-grid">
+      <!-- Left Column: Medicine Checklist -->
+      <div>
+        <div class="section-title">
+          <h3 id="checklistTitle">Medicines for Today</h3>
+        </div>
+
+        <div id="checklistContainer">
+          <!-- Filled dynamically by JS -->
+        </div>
+      </div>
+
+      <!-- Right Column: Adherence Analytics Panel -->
+      <div>
+        <div class="section-title">
+          <h3>Adherence Stats</h3>
+        </div>
+        
+        <div class="glass-panel stat-card stat-info" style="margin-bottom: 20px;">
+          <span class="stat-label">Daily Progress</span>
+          <span class="stat-value" id="progressPercent">0%</span>
+          <div class="progress-container">
+            <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 10px;" id="progressSummary">
+            0 of 0 doses completed today.
+          </p>
+        </div>
+
+        <div class="stats-row">
+          <div class="glass-panel stat-card stat-success">
+            <span class="stat-label">Taken</span>
+            <span class="stat-value" id="takenCount">0</span>
+          </div>
+          <div class="glass-panel stat-card stat-danger">
+            <span class="stat-label">Missed</span>
+            <span class="stat-value" id="missedCount">0</span>
+          </div>
+        </div>
+        
+        <div class="glass-panel" style="margin-top: 10px;">
+          <h4 style="font-size: 1rem; margin-bottom: 10px;">
+            <i class="ri-lightbulb-line" style="color: var(--color-warning);"></i> Tips for Adherence
+          </h4>
+          <ul style="list-style: none; font-size: 0.85rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 8px; padding: 0;">
+            <li><i class="ri-checkbox-blank-circle-fill" style="font-size: 0.4rem; color: var(--color-primary); vertical-align: middle; margin-right: 6px;"></i> Keep your medicines in sight.</li>
+            <li><i class="ri-checkbox-blank-circle-fill" style="font-size: 0.4rem; color: var(--color-primary); vertical-align: middle; margin-right: 6px;"></i> Link taking pills to a daily habit.</li>
+            <li><i class="ri-checkbox-blank-circle-fill" style="font-size: 0.4rem; color: var(--color-primary); vertical-align: middle; margin-right: 6px;"></i> Make sure notifications are enabled!</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; <span id="yearSpan"></span> MediMind. All rights reserved. Designed for College Mini Project.</p>
+  </footer>
+
+  <!-- Global Glassmorphic Alarm Notification Overlay -->
+  <div class="alarm-overlay" id="alarmOverlay">
+    <div class="alarm-modal">
+      <div class="alarm-icon-wrapper">
+        <i class="ri-notification-3-line"></i>
+      </div>
+      <h2 class="alarm-title">Medication Due Now!</h2>
+      <div class="alarm-med-name" id="alarmMedName">Medicine Name</div>
+      <div class="alarm-med-dosage" id="alarmMedDosage">1 Tablet</div>
+      <div class="alarm-actions">
+        <button class="btn btn-success" id="alarmBtnTaken">
+          <i class="ri-check-line"></i> Mark as Taken
+        </button>
+        <button class="btn btn-danger" id="alarmBtnMissed">
+          <i class="ri-close-line"></i> Mark as Missed
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="js/db.js"></script>
+  <script src="js/reminder-service.js"></script>
+  <script>
+    // Theme Toggle Handler
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+
+    document.getElementById('yearSpan').textContent = new Date().getFullYear();
+
+    // Calendar generation and state management
+    let selectedDate = new Date().toISOString().split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Helper for formatting YYYY-MM-DD
+    const formatDate = (date) => date.toISOString().split('T')[0];
+
+    // Render Calendar Week picker
+    function renderCalendar() {
+      const calendarPicker = document.getElementById('calendarPicker');
+      calendarPicker.innerHTML = '';
+
+      const todayDate = new Date();
+      const currentDayOfWeek = todayDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      const daysSinceMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
+
+      for (let i = 0; i < 7; i++) {
+        const offset = i - daysSinceMonday;
+        const d = new Date();
+        d.setDate(todayDate.getDate() + offset);
+        const dateStr = formatDate(d);
+
+        const calendarDay = document.createElement('a');
+        calendarDay.href = '#';
+        calendarDay.className = `calendar-day ${selectedDate === dateStr ? 'active' : ''}`;
+        calendarDay.onclick = (e) => {
+          e.preventDefault();
+          selectedDate = dateStr;
+          renderCalendar();
+          renderDashboard();
+        };
+
+        const dayNameSpan = document.createElement('span');
+        dayNameSpan.className = 'calendar-day-name';
+        dayNameSpan.textContent = d.toLocaleDateString('en-US', { weekday: 'short' });
+
+        const dayNumSpan = document.createElement('span');
+        dayNumSpan.className = 'calendar-day-num';
+        dayNumSpan.textContent = d.getDate();
+
+        calendarDay.appendChild(dayNameSpan);
+        calendarDay.appendChild(dayNumSpan);
+        calendarPicker.appendChild(calendarDay);
+      }
+    }
+
+    // Toggle log status directly on checking checkbox
+    window.toggleLog = function(medicineId, status) {
+      if (window.DB) {
+        window.DB.logHistory(medicineId, selectedDate, status);
+        renderDashboard();
+      }
+    };
+
+    // Render checklist and stats
+    window.renderDashboard = function() {
+      const checklistContainer = document.getElementById('checklistContainer');
+      const checklistTitle = document.getElementById('checklistTitle');
+      
+      checklistTitle.textContent = `Medicines for ${selectedDate === todayStr ? 'Today' : selectedDate}`;
+
+      if (!window.DB) return;
+
+      const medicines = window.DB.getMedicines();
+      const history = window.DB.getHistory().filter(h => h.Date === selectedDate);
+      
+      // Map history by medicine ID
+      const historyMap = {};
+      history.forEach(h => {
+        historyMap[h.MedicineId] = h.Status;
+      });
+
+      const activeMedicines = [];
+      const now = new Date();
+      const currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      // Get weekday name of selected date
+      const dateParts = selectedDate.split('-');
+      const selDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+      const weekdayName = selDate.toLocaleDateString('en-US', { weekday: 'long' });
+
+      medicines.forEach(med => {
+        const scheduledDays = med.DaysOfWeek ? med.DaysOfWeek.split(',') : [];
+        if (scheduledDays.includes(weekdayName)) {
+          let status = 'Pending';
+          const loggedStatus = historyMap[med.MedicineId];
+
+          if (loggedStatus) {
+            status = loggedStatus;
+          } else {
+            if (selectedDate < todayStr) {
+              status = 'Missed';
+            } else if (selectedDate === todayStr) {
+              if (med.Time < currentHHMM) {
+                status = 'Pending';
+              } else {
+                status = 'Upcoming';
+              }
+            } else {
+              status = 'Upcoming';
+            }
+          }
+
+          activeMedicines.push({
+            ...med,
+            status,
+            isLogged: !!loggedStatus
+          });
+        }
+      });
+
+      // Render checklist items
+      if (activeMedicines.length === 0) {
+        checklistContainer.innerHTML = `
+          <div class="glass-panel" style="margin-bottom: 30px;">
+            <div class="empty-state">
+              <i class="ri-calendar-check-line"></i>
+              <h3>No Medicines Scheduled</h3>
+              <p>There are no medications scheduled for this date.</p>
+              ${selectedDate === todayStr ? '<a href="add-medicine.html" class="btn btn-primary">Add a Medicine</a>' : ''}
+            </div>
+          </div>
+        `;
+      } else {
+        let html = '<div class="medicine-list" style="margin-bottom: 30px;">';
+        activeMedicines.forEach(med => {
+          let checkboxHtml = '';
+          if (med.status === 'Taken') {
+            checkboxHtml = `
+              <button onclick="toggleLog(${med.MedicineId}, 'Missed')" class="med-checkbox checked" title="Mark as Pending / Missed">
+                <i class="ri-checkbox-circle-fill"></i>
+              </button>
+            `;
+          } else if (med.status === 'Missed') {
+            checkboxHtml = `
+              <button onclick="toggleLog(${med.MedicineId}, 'Taken')" class="med-checkbox missed" title="Mark as Taken">
+                <i class="ri-close-circle-fill"></i>
+              </button>
+            `;
+          } else if (med.status === 'Pending') {
+            checkboxHtml = `
+              <button onclick="toggleLog(${med.MedicineId}, 'Taken')" class="med-checkbox pending" title="Mark as Taken">
+                <i class="ri-checkbox-blank-circle-line"></i>
+              </button>
+            `;
+          } else {
+            checkboxHtml = `
+              <button class="med-checkbox upcoming" disabled title="Upcoming Dose">
+                <i class="ri-checkbox-blank-circle-line"></i>
+              </button>
+            `;
+          }
+
+          let rightBadgeHtml = '';
+          if (med.status === 'Taken') {
+            rightBadgeHtml = `<span class="status-badge status-badge-taken">Completed</span>`;
+          } else if (med.status === 'Missed') {
+            rightBadgeHtml = `<span class="status-badge status-badge-missed">Missed</span>`;
+          } else if (med.status === 'Pending') {
+            rightBadgeHtml = `
+              <span class="status-badge" style="background-color: var(--color-warning-light); color: var(--color-warning);">Overdue</span>
+              <button onclick="toggleLog(${med.MedicineId}, 'Missed')" class="btn btn-secondary btn-icon" style="width: 28px; height: 28px; margin-left: 8px;" title="Mark as Missed">
+                <i class="ri-close-line" style="font-size: 0.8rem;"></i>
+              </button>
+            `;
+          } else {
+            rightBadgeHtml = `<span style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;"><i class="ri-time-line"></i> Upcoming</span>`;
+          }
+
+          html += `
+            <div class="glass-panel medicine-item">
+              <div class="med-left">
+                <div class="med-checkbox-container">
+                  ${checkboxHtml}
+                </div>
+                <div class="med-info ${med.status === 'Taken' ? 'completed' : ''}">
+                  <span class="med-name">${med.MedicineName}</span>
+                  <div class="med-meta">
+                    <span><i class="ri-drop-line"></i> Dosage: <strong>${med.Dosage}</strong></span>
+                    <span><i class="ri-time-line"></i> Time: <strong>${med.Time}</strong></span>
+                  </div>
+                  ${med.Notes ? `<div class="med-notes"><i class="ri-sticky-note-line"></i> ${med.Notes}</div>` : ''}
+                </div>
+              </div>
+              <div class="med-actions">
+                ${rightBadgeHtml}
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        checklistContainer.innerHTML = html;
+      }
+
+      // Adherence Statistics
+      const totalCount = activeMedicines.length;
+      const takenCount = activeMedicines.filter(m => m.status === 'Taken').length;
+      const missedCount = activeMedicines.filter(m => m.status === 'Missed').length;
+      
+      const progressPercent = totalCount > 0 ? Math.round((takenCount / totalCount) * 100) : 0;
+
+      document.getElementById('progressPercent').textContent = `${progressPercent}%`;
+      document.getElementById('progressBar').style.width = `${progressPercent}%`;
+      document.getElementById('progressSummary').textContent = `${takenCount} of ${totalCount} doses completed today.`;
+      document.getElementById('takenCount').textContent = takenCount;
+      document.getElementById('missedCount').textContent = missedCount;
+    };
+
+    // Initial render
+    renderCalendar();
+    renderDashboard();
+  </script>
+</body>
+</html>

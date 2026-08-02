@@ -1,0 +1,159 @@
+<%- include('../partials/header') %>
+
+<div style="max-width: 600px; margin: 0 auto;">
+  <div class="glass-panel">
+    <div style="margin-bottom: 25px;">
+      <h2><i class="ri-edit-circle-line"></i> Edit Medicine Details</h2>
+      <p style="color: var(--text-secondary); margin-top: 4px;">Update the schedule or dosage for your medication.</p>
+    </div>
+
+    <% if (locals.error) { %>
+      <div class="alert alert-danger">
+        <i class="ri-error-warning-line"></i>
+        <span><%= error %></span>
+      </div>
+    <% } %>
+
+    <form action="/medicines/edit/<%= medicine.MedicineId %>" method="POST">
+      <div class="form-group">
+        <label for="medicineName" class="form-label">Medicine Name</label>
+        <input 
+          type="text" 
+          id="medicineName" 
+          name="medicineName" 
+          class="form-control" 
+          value="<%= medicine.MedicineName %>" 
+          required 
+          autocomplete="off"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="dosage" class="form-label">Dosage</label>
+        <input 
+          type="text" 
+          id="dosage" 
+          name="dosage" 
+          class="form-control" 
+          value="<%= medicine.Dosage %>" 
+          required 
+          autocomplete="off"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="time" class="form-label">Reminder Time</label>
+        <input 
+          type="time" 
+          id="time" 
+          name="time" 
+          class="form-control" 
+          value="<%= medicine.Time %>" 
+          required
+        >
+      </div>
+
+      <div class="form-group" style="margin-bottom: 25px;">
+        <label class="form-label">Schedule Days (Select at least one)</label>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;">
+          <% 
+            const activeDays = medicine.DaysOfWeek ? medicine.DaysOfWeek.split(',') : [];
+            ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].forEach(day => { 
+              const isChecked = activeDays.includes(day);
+          %>
+            <label class="day-checkbox-label" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid var(--border-glass); border-radius: var(--radius-sm); cursor: pointer; background: var(--bg-secondary); transition: all var(--transition-fast); font-weight: 500; font-size: 0.9rem; color: var(--text-primary);">
+              <input type="checkbox" name="daysOfWeek" value="<%= day %>" style="width: 16px; height: 16px; accent-color: var(--color-primary);" <%= isChecked ? 'checked' : '' %>>
+              <%= day.substring(0, 3) %>
+            </label>
+          <% }); %>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 25px;">
+        <label for="ringtone" class="form-label">Ringtone Alert Style</label>
+        <select id="ringtone" name="ringtone" class="form-control" style="cursor: pointer;">
+          <option value="Chime" <%= medicine.Ringtone === 'Chime' ? 'selected' : '' %>>Chime (Medical Chord)</option>
+          <option value="Digital" <%= medicine.Ringtone === 'Digital' ? 'selected' : '' %>>Digital (Beep Alarm)</option>
+          <option value="Pulse" <%= medicine.Ringtone === 'Pulse' ? 'selected' : '' %>>Pulse (Soft Pulse Hum)</option>
+        </select>
+      </div>
+
+      <script>
+        document.getElementById('ringtone').addEventListener('change', function() {
+          const val = this.value;
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          const ctx = new AudioContext();
+          
+          if (val === 'Chime') {
+            const playTone = (freq, start, duration) => {
+              const osc = ctx.createOscillator();
+              const gainNode = ctx.createGain();
+              osc.connect(gainNode);
+              gainNode.connect(ctx.destination);
+              osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+              osc.type = 'sine';
+              gainNode.gain.setValueAtTime(0.04, ctx.currentTime + start);
+              gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+              osc.start(ctx.currentTime + start);
+              osc.stop(ctx.currentTime + start + duration);
+            };
+            playTone(523.25, 0, 0.3); // C5
+            playTone(659.25, 0.15, 0.3); // E5
+            playTone(783.99, 0.3, 0.4); // G5
+          } else if (val === 'Digital') {
+            const playBeep = (start) => {
+              const osc = ctx.createOscillator();
+              const gainNode = ctx.createGain();
+              osc.connect(gainNode);
+              gainNode.connect(ctx.destination);
+              osc.frequency.setValueAtTime(880, ctx.currentTime + start);
+              osc.type = 'square';
+              gainNode.gain.setValueAtTime(0, ctx.currentTime + start);
+              gainNode.gain.linearRampToValueAtTime(0.02, ctx.currentTime + start + 0.02);
+              gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + 0.12);
+              osc.start(ctx.currentTime + start);
+              osc.stop(ctx.currentTime + start + 0.12);
+            };
+            playBeep(0);
+            playBeep(0.18);
+          } else if (val === 'Pulse') {
+            const osc = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            osc.frequency.setValueAtTime(220, ctx.currentTime);
+            osc.type = 'triangle';
+            gainNode.gain.setValueAtTime(0.05, ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.5);
+          }
+          
+          setTimeout(() => {
+            ctx.close();
+          }, 1000);
+        });
+      </script>
+
+      <div class="form-group" style="margin-bottom: 30px;">
+        <label for="notes" class="form-label">Special Notes / Instructions (Optional)</label>
+        <textarea 
+          id="notes" 
+          name="notes" 
+          class="form-control" 
+          placeholder="e.g. Take with food, Avoid milk, Take before sleeping..."
+        ><%= medicine.Notes %></textarea>
+      </div>
+
+      <div style="display: flex; gap: 15px; justify-content: flex-end;">
+        <a href="/medicines" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          <i class="ri-save-line"></i> Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

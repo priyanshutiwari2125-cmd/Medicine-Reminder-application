@@ -1,0 +1,95 @@
+<%- include('partials/header') %>
+
+<div style="margin-bottom: 30px;">
+  <h2>Adherence History</h2>
+  <p style="color: var(--text-secondary); margin-top: 4px;">Review your overall medicine adherence history and compliance scores</p>
+</div>
+
+<!-- History Analytics Row -->
+<div class="stats-row" style="margin-bottom: 35px;">
+  <div class="glass-panel stat-card stat-info">
+    <span class="stat-label">Lifetime Adherence</span>
+    <span class="stat-value"><%= stats.adherenceRate %>%</span>
+    <div class="progress-container">
+      <div class="progress-bar" style="width: <%= stats.adherenceRate %>%;"></div>
+    </div>
+  </div>
+  <div class="glass-panel stat-card stat-success">
+    <span class="stat-label">Total Doses Taken</span>
+    <span class="stat-value"><%= stats.totalTaken %></span>
+  </div>
+  <div class="glass-panel stat-card stat-danger">
+    <span class="stat-label">Total Doses Missed</span>
+    <span class="stat-value"><%= stats.totalMissed %></span>
+  </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="glass-panel" style="padding: 16px 24px; margin-bottom: 25px;">
+  <form action="/history" method="GET" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; margin: 0;">
+    <div class="form-group" style="margin: 0; flex: 1; min-width: 200px;">
+      <label for="status" class="form-label">Filter by Status</label>
+      <select id="status" name="status" class="form-control" style="padding: 10px 14px;">
+        <option value="" <%= statusFilter === '' ? 'selected' : '' %>>All Records</option>
+        <option value="Taken" <%= statusFilter === 'Taken' ? 'selected' : '' %>>Taken Only</option>
+        <option value="Missed" <%= statusFilter === 'Missed' ? 'selected' : '' %>>Missed Only</option>
+      </select>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">
+        <i class="ri-filter-line"></i> Apply Filter
+      </button>
+      <% if (statusFilter) { %>
+        <a href="/history" class="btn btn-secondary" style="padding: 10px 20px;">Clear</a>
+      <% } %>
+    </div>
+  </form>
+</div>
+
+<!-- History Log Table -->
+<div class="glass-panel">
+  <% if (logs.length === 0) { %>
+    <div class="empty-state">
+      <i class="ri-history-line"></i>
+      <h3>No History Found</h3>
+      <p>There are no recorded entries fitting the filter criteria.</p>
+    </div>
+  <% } else { %>
+    <div class="table-responsive">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time Logged</th>
+            <th>Medicine Name</th>
+            <th>Dosage</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% logs.forEach(function(log) { %>
+            <tr>
+              <td><strong><%= log.Date %></strong></td>
+              <td><%= log.Time %></td>
+              <td><strong><%= log.MedicineName %></strong></td>
+              <td><%= log.Dosage %></td>
+              <td>
+                <% if (log.Status === 'Taken') { %>
+                  <span class="status-badge status-badge-taken">
+                    <i class="ri-checkbox-circle-fill"></i> Taken
+                  </span>
+                <% } else { %>
+                  <span class="status-badge status-badge-missed">
+                    <i class="ri-close-circle-fill"></i> Missed
+                  </span>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,26 @@
+{
+  "name": "medicine-reminder-app",
+  "version": "1.0.0",
+  "description": "Medicine Reminder Application with SQLite and Express",
+  "main": "main.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "desktop": "electron ."
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "electron": "^43.2.0",
+    "nodemon": "^3.1.4"
+  }
+}

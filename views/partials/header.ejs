@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediMind - Medicine Reminder Application</title>
+  <!-- PWA & Application Meta Tags -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#4f46e5">
+  <!-- RemixIcon for modern, premium icons -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+  <!-- Core Design Stylesheet -->
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    // Theme Initializer to prevent screen flashing
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="nav-brand">
+      <i class="ri-heart-pulse-fill"></i>
+      <span>MediMind</span>
+    </a>
+    
+      <ul class="nav-links">
+        <li>
+          <a href="/" class="nav-link <%= locals.activePage === 'dashboard' ? 'active' : '' %>">
+            <i class="ri-dashboard-line"></i> Dashboard
+          </a>
+        </li>
+        <li>
+          <a href="/medicines" class="nav-link <%= locals.activePage === 'medicines' ? 'active' : '' %>">
+            <i class="ri-capsule-line"></i> Medicines
+          </a>
+        </li>
+        <li>
+          <a href="/history" class="nav-link <%= locals.activePage === 'history' ? 'active' : '' %>">
+            <i class="ri-history-line"></i> History
+          </a>
+        </li>
+      </ul>
+
+    <div class="nav-actions">
+      <!-- Dark/Light Theme Toggle -->
+      <button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle dark mode">
+        <i class="ri-moon-line moon-icon"></i>
+        <i class="ri-sun-line sun-icon"></i>
+      </button>
+    </div>
+  </nav>
+
+  <main class="container">

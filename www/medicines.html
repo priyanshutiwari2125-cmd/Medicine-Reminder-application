@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediMind - Medicine Reminder Application</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#4f46e5">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <i class="ri-heart-pulse-fill"></i>
+      <span>MediMind</span>
+    </a>
+    
+    <ul class="nav-links">
+      <li>
+        <a href="index.html" class="nav-link">
+          <i class="ri-dashboard-line"></i> Dashboard
+        </a>
+      </li>
+      <li>
+        <a href="medicines.html" class="nav-link active">
+          <i class="ri-capsule-line"></i> Medicines
+        </a>
+      </li>
+      <li>
+        <a href="history.html" class="nav-link">
+          <i class="ri-history-line"></i> History
+        </a>
+      </li>
+    </ul>
+
+    <div class="nav-actions">
+      <button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle dark mode">
+        <i class="ri-moon-line moon-icon"></i>
+        <i class="ri-sun-line sun-icon"></i>
+      </button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="section-title">
+      <div>
+        <h2>My Medicines</h2>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Manage all your medicine schedules and dosages</p>
+      </div>
+      <a href="add-medicine.html" class="btn btn-primary">
+        <i class="ri-add-line"></i> Add New Medicine
+      </a>
+    </div>
+
+    <div id="medicinesContainer">
+      <!-- Filled dynamically by JS -->
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; <span id="yearSpan"></span> MediMind. All rights reserved. Designed for College Mini Project.</p>
+  </footer>
+
+  <!-- Global Glassmorphic Alarm Notification Overlay -->
+  <div class="alarm-overlay" id="alarmOverlay">
+    <div class="alarm-modal">
+      <div class="alarm-icon-wrapper">
+        <i class="ri-notification-3-line"></i>
+      </div>
+      <h2 class="alarm-title">Medication Due Now!</h2>
+      <div class="alarm-med-name" id="alarmMedName">Medicine Name</div>
+      <div class="alarm-med-dosage" id="alarmMedDosage">1 Tablet</div>
+      <div class="alarm-actions">
+        <button class="btn btn-success" id="alarmBtnTaken">
+          <i class="ri-check-line"></i> Mark as Taken
+        </button>
+        <button class="btn btn-danger" id="alarmBtnMissed">
+          <i class="ri-close-line"></i> Mark as Missed
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="js/db.js"></script>
+  <script src="js/reminder-service.js"></script>
+  <script>
+    // Theme Toggle Handler
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    });
+
+    document.getElementById('yearSpan').textContent = new Date().getFullYear();
+
+    window.deleteMedicine = function(id) {
+      if (confirm('Are you sure you want to delete this medicine? All logs in history associated with this medicine will also be deleted.')) {
+        if (window.DB) {
+          window.DB.deleteMedicine(id);
+          renderMedicines();
+        }
+      }
+    };
+
+    function renderMedicines() {
+      const container = document.getElementById('medicinesContainer');
+      if (!window.DB) return;
+
+      const medicines = window.DB.getMedicines();
+
+      if (medicines.length === 0) {
+        container.innerHTML = `
+          <div class="glass-panel">
+            <div class="empty-state">
+              <i class="ri-capsule-line"></i>
+              <h3>No Medicines Found</h3>
+              <p>You haven't added any medicines yet. Get started by adding your first medication.</p>
+              <a href="add-medicine.html" class="btn btn-primary">Add Medicine</a>
+            </div>
+          </div>
+        `;
+      } else {
+        let html = '<div class="medicine-list">';
+        medicines.forEach(medicine => {
+          const shortDays = medicine.DaysOfWeek 
+            ? medicine.DaysOfWeek.split(',').map(d => d.substring(0, 3)).join(', ') 
+            : 'None';
+
+          html += `
+            <div class="glass-panel medicine-item">
+              <div class="med-left">
+                <div class="med-status-indicator status-pending" title="Active"></div>
+                <div class="med-info">
+                  <span class="med-name">${medicine.MedicineName}</span>
+                  <div class="med-meta">
+                    <span><i class="ri-drop-line"></i> Dosage: <strong>${medicine.Dosage}</strong></span>
+                    <span><i class="ri-time-line"></i> Time: <strong>${medicine.Time}</strong></span>
+                    <span><i class="ri-calendar-check-line"></i> Days: <strong>${shortDays}</strong></span>
+                    <span><i class="ri-music-2-line"></i> Ringtone: <strong>${medicine.Ringtone}</strong></span>
+                  </div>
+                  ${medicine.Notes ? `<div class="med-notes"><i class="ri-sticky-note-line"></i> Notes: ${medicine.Notes}</div>` : ''}
+                </div>
+              </div>
+              
+              <div class="med-actions">
+                <a href="edit-medicine.html?id=${medicine.MedicineId}" class="btn btn-secondary btn-icon" title="Edit Medicine">
+                  <i class="ri-edit-2-line"></i>
+                </a>
+                <button onclick="deleteMedicine(${medicine.MedicineId})" class="btn btn-danger btn-icon" title="Delete Medicine">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+      }
+    }
+
+    // Initial render
+    renderMedicines();
+  </script>
+</body>
+</html>
