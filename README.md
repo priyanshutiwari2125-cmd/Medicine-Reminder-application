@@ -43,28 +43,36 @@ MediMind is a premium, responsive medicine reminder application designed to help
 
 ---
 
-## 🚀 How to Run the Application
+## 🚀 Running the Application
 
-### 1. Standalone Android Application
+* **Live Demo (Web App):** https://priyanshutiwari2125-cmd.github.io/Medicine-Reminder-application/ (Operates in offline/Local Storage fallback mode if no local Node server is running)
+
+For local development with persistent database storage:
+
+* **Local Web App:** http://localhost:3000/
+* **Local Backend API:** http://localhost:3000/
+* **SQLite Database:** Local SQLite3 database (`medicine_reminder.db`)
+
+To run the local version manually:
+
+### 1. Start the Node/Express Backend Server
+Open a terminal in the root directory and execute:
+```bash
+npm install
+npm run dev
+```
+
+### 2. Start the Desktop Application (Electron)
+Open a terminal in the root directory and execute:
+```bash
+npm run desktop
+```
+
+### 3. Run the Standalone Android Application
 The native Android wrapper is ready for deployment.
-- **Open in Android Studio:** Open the `android` subfolder in Android Studio:
-  ```bash
-  c:\Users\Priyanshu\Desktop\Medicine reminder application\android
-  ```
-- **Run Emulator:** Launch an emulator (e.g. Pixel 5 / Pixel 6 running API 34) and click the green **Run (Play)** button in the top toolbar to deploy.
-- **Pre-compiled APK:** You can directly install the pre-compiled debug APK located at:
-  `android/app/build/outputs/apk/debug/app-debug.apk`
-
-### 2. Desktop Application (Electron)
-To run the server-side version on your desktop:
-- Install dependencies:
-  ```bash
-  npm install
-  ```
-- Run the Electron application:
-  ```bash
-  npm run desktop
-  ```
+* **Open in Android Studio:** Open the `android` subfolder in Android Studio.
+* **Run Emulator:** Launch an emulator (e.g. Pixel 5 / Pixel 6 running API 34) and click the green **Run (Play)** button in the top toolbar to deploy.
+* **Pre-compiled APK:** You can directly install the pre-compiled debug APK located at `android/app/build/outputs/apk/debug/app-debug.apk`.
 
 ---
 
