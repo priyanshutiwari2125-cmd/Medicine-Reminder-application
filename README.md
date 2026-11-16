@@ -1,6 +1,6 @@
 # MediMind - Medicine Reminder Application
 
-🌐 **Live Demo:** [Launch MediMind App](https://priyanshutiwari2125-cmd.github.io/Medicine-Reminder-application/)
+🌐 **Live Demo:** (https://priyanshutiwari2125-cmd.github.io/Medicine-Reminder-application/)
 
 MediMind is a premium, responsive medicine reminder application designed to help users track their medications, schedules, daily progress, and adherence rates. The application is built to run as both a local desktop application (via Electron) and a standalone native Android application (via Capacitor).
 
